@@ -5,6 +5,41 @@
 Escriba el codigo que ejecute la accion solicitada en cada pregunta.
 """
 
+import os
+import zipfile
+import csv
+
+def extract_zip(zip_file: str, destination: str):
+
+    if not os.path.isdir(destination):
+        with zipfile.ZipFile(zip_file, "r") as archive:
+            archive.extractall(path=os.path.dirname(destination))
+
+
+
+def write_to_csv(datos: list[dict], directorio: str, nombre_archivo: str):
+
+    os.makedirs(directorio, exist_ok=True)
+    ruta_salida = os.path.join(directorio, f"{nombre_archivo}.csv")
+    
+    with open(ruta_salida, "w", encoding="utf-8", newline="") as f:
+        escritor = csv.DictWriter(f, fieldnames=["phrase", "target"])
+        escritor.writeheader()
+        escritor.writerows(datos)
+
+def parse_text_files(source_folder: str) -> list[dict]:
+
+    registros = []
+    for clase in sorted(os.listdir(source_folder)):
+        clase_path = os.path.join(source_folder, clase)
+        if os.path.isdir(clase_path):
+            for archivo in os.listdir(clase_path):
+                ruta = os.path.join(clase_path, archivo)
+                with open(ruta, "r", encoding="utf-8") as f:
+                    contenido = f.read().strip()
+                    registros.append({"phrase": contenido, "target": clase})
+    return registros
+
 
 def pregunta_01():
     """
@@ -69,5 +104,21 @@ def pregunta_01():
     |  4 | Tampere Science Parks is a Finnish company that owns , leases and builds office properties and it specialises in facilities for technology-oriented businesses         | neutral  |
     ```
 
-
     """
+    
+    
+    zip_input = "files/input.zip"
+    input_root = "files/input"
+    output_path = "files/output"
+
+    # Paso 1: Extraer archivo ZIP
+    extract_zip(zip_input, input_root)
+
+    # Paso 2 y 3: Procesar train y test, y guardar como CSV
+    for split in ["train", "test"]:
+        folder = f"{input_root}/{split}"
+        entries = parse_text_files(folder)
+        write_to_csv(entries, output_path, f"{split}_dataset")
+
+if __name__ == "__main__":
+    pregunta_01()
